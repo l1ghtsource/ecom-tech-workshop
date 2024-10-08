@@ -1,6 +1,7 @@
 TRAIN_SCRIPT = ./train.sh
 INFERENCE_SCRIPT = ./inference.sh
 CONVERT_SCRIPT = ./convert.sh
+DOWNLOAD_SCRIPT = ./download.sh
 
 TRAIN_CONFIG_PATH ?= configs/train_cfg_1.yaml
 TRAIN_NEW_CONFIG_PATH ?= configs/train_cfg_2.yaml
@@ -45,3 +46,8 @@ clean:
 	@echo "Cleaning output files..."
 	@rm -f *.npy submission.csv
 	@echo "Cleaned up!"
+
+.PHONY: download
+download:
+	@echo "Downloading model weights..."
+	@$(DOWNLOAD_SCRIPT)
