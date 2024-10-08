@@ -10,7 +10,7 @@ INFERENCE_SCRIPT_PATH = './inference.sh'
 INFERENCE_CONFIG_PATH = './configs/inference_cfg_1.yaml'
 TEMP_CSV_PATH = './data/temp_input.csv'
 TEMP_OUTPUT_PATH = 'output_temp.npy'
-YAML_CLASSES_PATH = 'data/trends_classes.yaml'
+YAML_CLASSES_PATH = './data/trends_classes.yaml'
 
 with open(YAML_CLASSES_PATH, 'r', encoding='utf-8') as file:
     class_map = yaml.safe_load(file)['classes']
@@ -71,6 +71,31 @@ def run_inference(assessment: str, tags: str, text: str) -> np.ndarray:
 def run_demo_inference() -> np.ndarray:
     return np.random.rand(1, 50)
 
+def validate_assessment(assessment: str) -> bool:
+    try:
+        assessment_num = int(assessment)
+        if assessment_num < 0 or assessment_num > 6:
+            return False
+        return True
+    except ValueError:
+        return False
+
+def validate_tags(tags: str) -> bool:
+    if not tags.startswith('{') or not tags.endswith('}'):
+        return False
+    tags_content = tags[1:-1].strip()
+    if not tags_content:
+        return False
+    tags_list = tags_content.split(',')
+    if any(tag.strip() == '' for tag in tags_list):
+        return False
+    return True
+
+def validate_text(text: str) -> bool:
+    if len(text) < 1 or len(text) > 1000:
+        return False
+    return True
+
 st.title('Множественная классификация обратной связи от пользователей')
 
 mode = st.radio(
@@ -83,14 +108,17 @@ tags = st.text_input('Введите tags')
 text = st.text_area('Введите text', '', height=200)
 
 if st.button('Запустить инференс'):
-    if not assessment.strip() or not tags.strip() or not text.strip():
-        st.error('Все поля (assessment, tags, text) должны быть заполнены!')
+    if not validate_assessment(assessment):
+        st.error('Assessment должен быть целым числом от 0 до 6')
+    elif not validate_tags(tags):
+        st.error('Тэги должны быть в формате {TAG1,TAG2,...}')
+    elif not validate_text(text):
+        st.error('Текст должен быть длиной от 1 до 1000 символов')
     else:
         st.write(f'Запускаем инференс модели в режиме: {mode}...')
 
         if mode == 'Демо режим':
             predictions = run_demo_inference()
-
         else:
             predictions = run_inference(assessment, tags, text)
             
@@ -120,11 +148,22 @@ if st.button('Запустить инференс'):
 
             st.plotly_chart(fig, use_container_width=True)
 
-
-            high_prob_classes = {i: class_map[i] for i, prob in enumerate(predictions[0]) if prob >= 0.55}
+            high_prob_classes = {i: (class_map[i], prob) for i, prob in enumerate(predictions[0]) if prob >= 0.55}
             if high_prob_classes:
                 st.subheader('Классы с вероятностью >= 0.55:')
-                for class_id, class_name in high_prob_classes.items():
-                    st.write(f"Class {class_id}: {class_name}")
+
+                table_data = {
+                    'Класс': [],
+                    'Название класса': [],
+                    'Вероятность': []
+                }
+
+                for class_id, (class_name, prob) in high_prob_classes.items():
+                    table_data['Класс'].append(class_id)
+                    table_data['Название класса'].append(class_name)
+                    table_data['Вероятность'].append(round(prob, 3))
+
+                df = pd.DataFrame(table_data)
+                st.table(df)
             else:
                 st.write('Нет классов с вероятностью >= 0.55')
