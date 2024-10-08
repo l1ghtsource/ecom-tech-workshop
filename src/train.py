@@ -151,9 +151,9 @@ def main(args):
         'val': Dataset.from_dict({'text': [str(x) for x in x_val], 'labels': y_val})
     })
 
-    def tokenize_examples(examples: Batch, tokenizer: PreTrainedTokenizerFast) -> Dict[str,
-                                                                                       Union[List[List[int]],
-                                                                                             torch.Tensor]]:
+    def tokenize_examples(
+        examples: Batch, tokenizer: PreTrainedTokenizerFast
+    ) -> Dict[str, Union[List[List[int]], torch.Tensor]]:
         tokenized_inputs = tokenizer(examples['text'], max_length=config.max_length, truncation=True)
         tokenized_inputs['labels'] = examples['labels']
         return tokenized_inputs

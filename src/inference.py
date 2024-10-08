@@ -81,7 +81,8 @@ def main(config_path: str, test_csv_path: str, output_name: str):
         attention_mask = [item['attention_mask'] for item in batch]
 
         input_ids_padded = torch.nn.utils.rnn.pad_sequence(
-            input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
+            input_ids, batch_first=True, padding_value=tokenizer.pad_token_id
+        )
         attention_mask_padded = torch.nn.utils.rnn.pad_sequence(attention_mask, batch_first=True, padding_value=0)
 
         return {
