@@ -42,10 +42,25 @@ def run_inference(assessment: str, tags: str, text: str) -> np.ndarray:
 
         predictions = np.load(TEMP_OUTPUT_PATH)
         return predictions
+    
+    except:
+        try:
+            subprocess.run(
+                [
+                    INFERENCE_SCRIPT_PATH, 
+                    INFERENCE_CONFIG_PATH,
+                    TEMP_CSV_PATH, 
+                    TEMP_OUTPUT_PATH
+                ],
+                check=True
+            )
 
-    except subprocess.CalledProcessError as e:
-        st.error('Ошибка при запуске инференса: ' + str(e))
-        return None
+            predictions = np.load(TEMP_OUTPUT_PATH)
+            return predictions
+        
+        except subprocess.CalledProcessError as e:
+            st.error('Ошибка при запуске инференса: ' + str(e))
+            return None
 
     finally:
         if os.path.exists(TEMP_CSV_PATH):
