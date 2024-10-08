@@ -107,7 +107,8 @@ ecom-tech-workshop/
 ├── data/                   # Папка с данными
 │   ├── example.csv
 │   ├── train.csv
-│   └── test.csv
+│   ├── test.csv
+│   └── trend_classed.yaml
 │
 ├── src/                    # Исходные скрипты
 │   ├── train.py            # Код обучения модели
