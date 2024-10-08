@@ -16,6 +16,7 @@ from transformers import (
 )
 from peft import PeftModel
 
+
 @dataclass
 class Config:
     gemma_dir: str
@@ -27,12 +28,14 @@ class Config:
     sep: str
     fillna: str
 
+
 def load_config_from_yaml(file_path: str) -> Config:
     with open(file_path, 'r') as file:
         yaml_data = yaml.safe_load(file)
 
     config = Config(**yaml_data)
     return config
+
 
 def main(config_path: str, test_csv_path: str, output_name: str):
     config = load_config_from_yaml(config_path)
@@ -65,7 +68,8 @@ def main(config_path: str, test_csv_path: str, output_name: str):
         'test': Dataset.from_dict({'text': [str(x) for x in test['total'].tolist()]})
     })
 
-    def tokenize_examples(examples: Dict[str, List[str]], tokenizer: PreTrainedTokenizerBase) -> Dict[str, List[torch.Tensor]]:
+    def tokenize_examples(examples: Dict[str, List[str]],
+                          tokenizer: PreTrainedTokenizerBase) -> Dict[str, List[torch.Tensor]]:
         tokenized_inputs = tokenizer(examples['text'], max_length=config.max_length, truncation=True)
         return tokenized_inputs
 
@@ -76,14 +80,15 @@ def main(config_path: str, test_csv_path: str, output_name: str):
         input_ids = [item['input_ids'] for item in batch]
         attention_mask = [item['attention_mask'] for item in batch]
 
-        input_ids_padded = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
+        input_ids_padded = torch.nn.utils.rnn.pad_sequence(
+            input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
         attention_mask_padded = torch.nn.utils.rnn.pad_sequence(attention_mask, batch_first=True, padding_value=0)
 
         return {
             'input_ids': input_ids_padded,
             'attention_mask': attention_mask_padded
         }
-    
+
     test_dataloader = DataLoader(ds['test'], batch_size=config.batch_size, collate_fn=collate_fn)
 
     model.eval()
@@ -101,12 +106,13 @@ def main(config_path: str, test_csv_path: str, output_name: str):
     with open(output_name, 'wb') as f:
         np.save(f, probs)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run inference on a test dataset using a pre-trained model.")
     parser.add_argument('--config', type=str, required=True, help="Path to the config.yaml file.")
     parser.add_argument('--test_csv', type=str, required=True, help="Path to the test.csv file.")
     parser.add_argument('--output', type=str, required=True, help="Name for the output .npy file.")
-    
+
     args = parser.parse_args()
-    
+
     main(args.config, args.test_csv, args.output)

@@ -2,12 +2,14 @@ import argparse
 import numpy as np
 import pandas as pd
 
+
 def f(row):
     res = []
     for i in range(len(row)):
         if row[i] == 1:
             res.append(i)
     return res
+
 
 def main(example_path: str, probs_path: str, probs_new_path: str, output_csv: str):
     sample = pd.read_csv(example_path)
@@ -49,6 +51,7 @@ def main(example_path: str, probs_path: str, probs_new_path: str, output_csv: st
 
     preds = pd.DataFrame({'index': sample['index'], 'target': sample['target_0.55']})
     preds.to_csv(output_csv, index=False)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert predictions from numpy arrays to CSV.')

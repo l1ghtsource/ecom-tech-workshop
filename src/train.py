@@ -141,7 +141,8 @@ def main(args):
     label_weights = 1 - labels.sum(axis=0) / labels.sum()
 
     row_ids = np.arange(len(labels))
-    train_idx, y_train, val_idx, y_val = iterative_train_test_split(row_ids[:,np.newaxis], labels, test_size=config.test_size)
+    train_idx, y_train, val_idx, y_val = iterative_train_test_split(
+        row_ids[:, np.newaxis], labels, test_size=config.test_size)
     x_train = [text[i] for i in train_idx.flatten()]
     x_val = [text[i] for i in val_idx.flatten()]
 
@@ -150,7 +151,9 @@ def main(args):
         'val': Dataset.from_dict({'text': [str(x) for x in x_val], 'labels': y_val})
     })
 
-    def tokenize_examples(examples: Batch, tokenizer: PreTrainedTokenizerFast) -> Dict[str, Union[List[List[int]], torch.Tensor]]:
+    def tokenize_examples(examples: Batch, tokenizer: PreTrainedTokenizerFast) -> Dict[str,
+                                                                                       Union[List[List[int]],
+                                                                                             torch.Tensor]]:
         tokenized_inputs = tokenizer(examples['text'], max_length=config.max_length, truncation=True)
         tokenized_inputs['labels'] = examples['labels']
         return tokenized_inputs
@@ -160,9 +163,9 @@ def main(args):
 
     def collate_fn(batch: List[Dict[str, torch.Tensor]], tokenizer: PreTrainedTokenizerFast) -> Dict[str, torch.Tensor]:
         dict_keys = ['input_ids', 'attention_mask', 'labels']
-        
+
         d: Dict[str, List[torch.Tensor]] = {k: [dic[k] for dic in batch] for k in dict_keys}
-        
+
         d['input_ids'] = torch.nn.utils.rnn.pad_sequence(
             d['input_ids'], batch_first=True, padding_value=tokenizer.pad_token_id
         )
@@ -170,19 +173,19 @@ def main(args):
             d['attention_mask'], batch_first=True, padding_value=0
         )
         d['labels'] = torch.stack(d['labels'])
-        
+
         return d
 
     def compute_metrics(p: Tuple[torch.Tensor, torch.Tensor]) -> Dict[str, float]:
         predictions, labels = p
-        
+
         predictions = predictions > 0
-        
+
         f1_micro = f1_score(labels, predictions, average='micro')
         f1_macro = f1_score(labels, predictions, average='macro')
         f1_weighted = f1_score(labels, predictions, average='weighted')
         accuracy = accuracy_score(labels, predictions)
-        
+
         return {
             'f1_micro': f1_micro,
             'f1_macro': f1_macro,
@@ -194,18 +197,18 @@ def main(args):
         def __init__(self, label_weights, **kwargs):
             super().__init__(**kwargs)
             self.label_weights = label_weights
-        
+
         def compute_loss(self, model, inputs, return_outputs=False):
             labels = inputs.pop('labels')
-            
+
             outputs = model(**inputs)
             logits = outputs.get('logits')
-            
+
             loss = F.binary_cross_entropy_with_logits(logits, labels.to(torch.float32), pos_weight=self.label_weights)
             return (loss, outputs) if return_outputs else loss
 
     trainer = CustomTrainer(
-        args=training_args, 
+        args=training_args,
         model=model,
         tokenizer=tokenizer,
         train_dataset=ds['train'],

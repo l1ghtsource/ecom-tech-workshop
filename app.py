@@ -15,8 +15,9 @@ YAML_CLASSES_PATH = './data/trends_classes.yaml'
 with open(YAML_CLASSES_PATH, 'r', encoding='utf-8') as file:
     class_map = yaml.safe_load(file)['classes']
 
+
 def run_inference(assessment: str, tags: str, text: str) -> np.ndarray:
-    
+
     df = pd.DataFrame(
         {
             'index': [1],
@@ -25,15 +26,15 @@ def run_inference(assessment: str, tags: str, text: str) -> np.ndarray:
             'text': [text]
         }
     )
-    
+
     df.to_csv(TEMP_CSV_PATH, index=False)
-    
+
     try:
         subprocess.run(
             [
-                INFERENCE_SCRIPT_PATH, 
+                INFERENCE_SCRIPT_PATH,
                 INFERENCE_CONFIG_PATH,
-                TEMP_CSV_PATH, 
+                TEMP_CSV_PATH,
                 TEMP_OUTPUT_PATH
             ],
             check=True,
@@ -42,14 +43,14 @@ def run_inference(assessment: str, tags: str, text: str) -> np.ndarray:
 
         predictions = np.load(TEMP_OUTPUT_PATH)
         return predictions
-    
+
     except:
         try:
             subprocess.run(
                 [
-                    INFERENCE_SCRIPT_PATH, 
+                    INFERENCE_SCRIPT_PATH,
                     INFERENCE_CONFIG_PATH,
-                    TEMP_CSV_PATH, 
+                    TEMP_CSV_PATH,
                     TEMP_OUTPUT_PATH
                 ],
                 check=True
@@ -57,7 +58,7 @@ def run_inference(assessment: str, tags: str, text: str) -> np.ndarray:
 
             predictions = np.load(TEMP_OUTPUT_PATH)
             return predictions
-        
+
         except subprocess.CalledProcessError as e:
             st.error('Ошибка при запуске инференса: ' + str(e))
             return None
@@ -68,8 +69,10 @@ def run_inference(assessment: str, tags: str, text: str) -> np.ndarray:
         if os.path.exists(TEMP_OUTPUT_PATH):
             os.remove(TEMP_OUTPUT_PATH)
 
+
 def run_demo_inference() -> np.ndarray:
     return np.random.rand(1, 50)
+
 
 def validate_assessment(assessment: str) -> bool:
     try:
@@ -79,6 +82,7 @@ def validate_assessment(assessment: str) -> bool:
         return True
     except ValueError:
         return False
+
 
 def validate_tags(tags: str) -> bool:
     if not tags.startswith('{') or not tags.endswith('}'):
@@ -91,10 +95,12 @@ def validate_tags(tags: str) -> bool:
         return False
     return True
 
+
 def validate_text(text: str) -> bool:
     if len(text) < 1 or len(text) > 1000:
         return False
     return True
+
 
 st.title('Множественная классификация обратной связи от пользователей')
 
@@ -121,10 +127,10 @@ if st.button('Запустить инференс'):
             predictions = run_demo_inference()
         else:
             predictions = run_inference(assessment, tags, text)
-            
+
         if predictions is not None:
             st.write('Инференс завершен успешно!')
-            
+
             num_classes = 50
             class_labels = [f'Class {i}' for i in range(1, num_classes + 1)]
 
