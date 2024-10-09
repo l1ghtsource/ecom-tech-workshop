@@ -48,6 +48,16 @@ def main(example_path: str, probs_path: str, probs_new_path: str, output_csv: st
         print()
 
     sample['target_0.55'] = sample['target_0.55'].fillna(39)
+    
+    def keep_only_19_39(row):
+        labels = row.split()
+        if '19' in labels and len(labels) > 1:
+            return '19'
+        elif '39' in labels and len(labels) > 1:
+            return '39'
+        return row
+
+    sample['target_0.55'] = sample['target_0.55'].apply(keep_only_19_39)
 
     preds = pd.DataFrame({'index': sample['index'], 'target': sample['target_0.55']})
     preds.to_csv(output_csv, index=False)
